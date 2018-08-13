@@ -5,12 +5,9 @@ jobs:
       - image: wilson208/circleci-awscli
     steps:
       - checkout
-      - run:
-          name: Install artillery
-          command: sudo npm install -g artillery
 
       #TODO: Deploy the website
 
       - run:
           name: Run a test on our deployed website
-          command: artillery quick --count 1 -n 1 http://cloudformation-demo1.mycodefu.com
+          command: curl http://cloudformation-demo1.mycodefu.com
