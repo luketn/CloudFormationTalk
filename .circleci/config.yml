@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  demo1:
+    docker:
+      - image: wilson208/circleci-awscli
+    steps:
+      - checkout
+      - run:
+          name: Install artillery
+          command: npm install -g artillery
+
+      #TODO: Deploy the website
+
+      - run:
+          name: Run a test on our deployed website
+          command: artillery -V
