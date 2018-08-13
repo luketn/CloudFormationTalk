@@ -13,4 +13,4 @@ jobs:
 
       - run:
           name: Run a test on our deployed website
-          command: artillery -V
+          command: artillery quick --count 1 -n 1 http://cloudformation-demo1.mycodefu.com
