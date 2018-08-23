@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Launch a static website backed by an S3 bucket and served via https through cloudfront.
+  Assumes you have the following available already:
+  * An address in mind (e.g. blog.example.com)
+  * An existing Route53 Hosted Zone for the domain
+  * A HTTPS certificate registered in ACM in the us-east-1 region
+  * Recommend to run this in the us-east-1 region, as S3 bucket backed CF distros work better with buckets in this region.
+
+Parameters:
+  HostedZoneName:
+    Description: >
+      The Hosted Zone in which to create the website's DNS record. e.g. mycodefu.com.
+    Type: "String"
+  WebsiteAddress:
+    Description: >
+      The web address to host the website at. Must be a subdomain of the hostedzone. e.g. cfn-cf.mycodefu.com
+    Type: "String"
+  S3BucketName:
+    Description: Name of the s3 bucket to create for website source files. e.g. cfn-cf-site
+    Type: "String"
+  TlsCertificateArn:
+    Description: >
+      ARN for the HTTPS certificate covering the domain in WebsiteAddress. This object must be
+      created in us-east-1, regardless of which region this CloudFormation template is launched.
+    Type: "String"
+
+Resources:
+  S3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref S3BucketName
+  S3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          -
+            Sid: "AllowAll"
+            Effect: "Allow"
+            Action:
+              - "s3:GetObject"
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  -
+                    Ref: "S3Bucket"
+                  - "/*"
+            Principal: "*"
+  R53Record:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      Comment:
+        Fn::Join:
+          - ""
+          -
+            - "Alias CloudFront for "
+            -
+              Ref: "WebsiteAddress"
+      HostedZoneName: !Ref HostedZoneName
+      Type: A
+      Name: !Ref WebsiteAddress
+      AliasTarget:
+        DNSName: !GetAtt CFDistribution.DomainName
+        HostedZoneId: "Z2FDTNDATAQYW2"
+  CFDistribution:
+    Type: "AWS::CloudFront::Distribution"
+    DependsOn: "S3Bucket"
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref WebsiteAddress
+        Origins:
+          - DomainName: !GetAtt S3Bucket.DomainName
+            OriginPath: ""
+            Id: S3BucketOrigin
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+        Comment:
+          Fn::Join:
+            - ""
+            -
+              - "CloudFront origin for "
+              -
+                Ref: "WebsiteAddress"
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          TargetOriginId: S3BucketOrigin
+          ForwardedValues:
+            QueryString: "false"
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
+        Enabled: "true"
+        HttpVersion: "http2"
+        PriceClass: "PriceClass_100"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref TlsCertificateArn
+          SslSupportMethod: sni-only
+
+Outputs:
+  WebsiteAddress:
+    Description: Published website address!
+    Value:
+      Fn::Join:
+        - ""
+        -
+          - "https://"
+          -
+            Ref: "WebsiteAddress"
