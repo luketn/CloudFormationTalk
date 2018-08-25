@@ -28,7 +28,8 @@ to
       ResourceRecords:
         - !GetAtt CFDistribution.DomainName
       SetIdentifier: CDN_OLD
-      Weight: 100
+      Weight: 0
+      TTL: 10
 ```
 
 (on branch alternate-demo1)
@@ -36,5 +37,6 @@ to
 Then we can deploy a new set of DNS record alternatives:
 
 ```bash
-./demo2/deploy.sh
+cd demo2
+./deploy.sh
 ```

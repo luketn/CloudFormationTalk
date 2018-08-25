@@ -34,7 +34,7 @@ Resources:
         - Name: !Ref 'WebsiteAddress'
           ResourceRecords:
             - !Ref 'CDNDomain'
-          TTL: 60
+          TTL: 10
           SetIdentifier: CDN
           Type: CNAME
           Weight: !Ref 'CDNDomainWeight'
@@ -42,7 +42,7 @@ Resources:
           ResourceRecords:
             - !Ref 'LegacyCDNDomain'
           SetIdentifier: LegacyCDN
-          TTL: 60
+          TTL: 10
           Type: CNAME
           Weight: !Ref 'LegacyCDNDomainWeight'
 
@@ -53,7 +53,7 @@ Outputs:
       Fn::Join:
         - ""
         -
-          - "https://"
+          - "http://"
           -
             Ref: "WebsiteAddress"
   PercentTransitioned:
