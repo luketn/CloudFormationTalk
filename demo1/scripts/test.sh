@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+SUBDOMAIN=$1
+
 echo "Testing that the site is running..."
-PAGE=$(curl $1)
+PAGE=$(curl "http://"$SUBDOMAIN".mycodefu.com")
 
 if [ "$PAGE" == "Welcome to CloudFront - This site was built and deployed with CloudFormation." ]
 then
