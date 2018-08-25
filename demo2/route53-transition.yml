@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Transition between two CDNs using Route53 Weighted DNS
+
+Parameters:
+  HostedZoneName:
+    Description: >
+      The Hosted Zone in which to create the website's DNS record. e.g. mycodefu.com.
+    Type: "String"
+  WebsiteAddress:
+    Description: The web address of the website. Must be a subdomain of the hostedzone. e.g. cfn.mycodefu.com
+    Type: "String"
+  LegacyCDNDomain:
+    Description: The DNS of the legacy CDN.
+    Type: "String"
+  LegacyCDNDomainWeight:
+    Default: '100'
+    Description: The DNS record weight value for the legacy CDN
+    Type: String
+  CDNDomain:
+    Description: The DNS of the CDN.
+    Type: "String"
+  CDNDomainWeight:
+    Default: '0'
+    Description: The DNS record weight value for the CDN
+    Type: String
+
+Resources:
+  CdnDnsRecords:
+    Type: AWS::Route53::RecordSetGroup
+    Properties:
+      HostedZoneName: !Ref 'HostedZoneName'
+      RecordSets:
+        - Name: !Ref 'WebsiteAddress'
+          ResourceRecords:
+            - !Ref 'CDNDomain'
+          SetIdentifier: CDN
+          TTL: 60
+          Type: CNAME
+          Weight: !Ref 'CDNDomainWeight'
+        - Name: !Ref 'WebsiteAddress'
+          ResourceRecords:
+            - !Ref 'LegacyCDNDomain'
+          SetIdentifier: LegacyCDN
+          TTL: 60
+          Type: CNAME
+          Weight: !Ref 'LegacyCDNDomainWeight'
+
+Outputs:
+  WebsiteAddress:
+    Description: Published website address!
+    Value:
+      Fn::Join:
+        - ""
+        -
+          - "https://"
+          -
+            Ref: "WebsiteAddress"
+  PercentTransitioned:
+    Description: Percentage transitioned to CDN
+    Value: !Ref "CDNDomainWeight"

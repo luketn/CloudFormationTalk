@@ -3,10 +3,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >
   Launch a static website backed by an S3 bucket and served via https through cloudfront.
   Assumes you have the following available already:
-  * An address in mind (e.g. blog.example.com)
+  * An address for the website in mind (e.g. blog.example.com)
   * An existing Route53 Hosted Zone for the domain
-  * A HTTPS certificate registered in ACM in the us-east-1 region
-  * Recommend to run this in the us-east-1 region, as S3 bucket backed CF distros work better with buckets in this region.
 
 Parameters:
   HostedZoneName:
@@ -20,17 +18,16 @@ Parameters:
   S3BucketName:
     Description: Name of the s3 bucket to create for website source files. e.g. cfn-cf-site
     Type: "String"
-  TlsCertificateArn:
-    Description: >
-      ARN for the HTTPS certificate covering the domain in WebsiteAddress. This object must be
-      created in us-east-1, regardless of which region this CloudFormation template is launched.
-    Type: "String"
 
 Resources:
   S3Bucket:
     Type: "AWS::S3::Bucket"
     Properties:
       BucketName: !Ref S3BucketName
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
   S3BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
@@ -97,14 +94,10 @@ Resources:
             QueryString: "false"
             Cookies:
               Forward: none
-          ViewerProtocolPolicy: redirect-to-https
+          ViewerProtocolPolicy: allow-all
         DefaultRootObject: index.html
         Enabled: "true"
-        HttpVersion: "http2"
-        PriceClass: "PriceClass_100"
-        ViewerCertificate:
-          AcmCertificateArn: !Ref TlsCertificateArn
-          SslSupportMethod: sni-only
+        PriceClass: "PriceClass_All"
 
 Outputs:
   WebsiteAddress:
@@ -113,6 +106,11 @@ Outputs:
       Fn::Join:
         - ""
         -
-          - "https://"
+          - "http://"
           -
             Ref: "WebsiteAddress"
+  S3DirectURL:
+    Value: !GetAtt
+      - S3Bucket
+      - WebsiteURL
+    Description: URL for website hosted on S3
