@@ -64,7 +64,8 @@ Resources:
       ResourceRecords:
         - !GetAtt CFDistribution.DomainName
       SetIdentifier: CDN_OLD
-      Weight: 100
+      Weight: 0
+      TTL: 60
   CFDistribution:
     Type: "AWS::CloudFront::Distribution"
     DependsOn: "S3Bucket"
