@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
-  Launch a static website backed by an S3 bucket and served via https through cloudfront.
+  Launch a static website backed by an S3 bucket and served via http through cloudfront.
   Assumes you have the following available already:
   * An address for the website in mind (e.g. blog.example.com)
   * An existing Route53 Hosted Zone for the domain
