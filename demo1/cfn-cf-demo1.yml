@@ -116,3 +116,6 @@ Outputs:
       - S3Bucket
       - WebsiteURL
     Description: URL for website hosted on S3
+  CloudFrontDomain:
+    Value: !GetAtt CFDistribution.DomainName
+    Description: CDN domain name
