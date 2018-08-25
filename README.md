@@ -12,5 +12,29 @@ The demo is in two parts:
 # Demo 1
 
 # Demo 2
+
 Let's first go back to Demo #1 and make a small change to it:
-- 
+
+Convert the DNS record type from:
+```bash
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CFDistribution.DomainName
+        HostedZoneId: "Z2FDTNDATAQYW2"
+``` 
+to
+```bash
+      Type: CNAME
+      ResourceRecords:
+        - !GetAtt CFDistribution.DomainName
+      SetIdentifier: CDN_OLD
+      Weight: 100
+```
+
+(on branch alternate-demo1)
+
+Then we can deploy a new set of DNS record alternatives:
+
+```bash
+./demo2/deploy.sh
+```
