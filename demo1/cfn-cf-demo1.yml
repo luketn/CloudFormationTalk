@@ -59,11 +59,12 @@ Resources:
             -
               Ref: "WebsiteAddress"
       HostedZoneName: !Ref HostedZoneName
-      Type: A
       Name: !Ref WebsiteAddress
-      AliasTarget:
-        DNSName: !GetAtt CFDistribution.DomainName
-        HostedZoneId: "Z2FDTNDATAQYW2"
+      Type: CNAME
+      ResourceRecords:
+        - !GetAtt CFDistribution.DomainName
+      SetIdentifier: CDN_OLD
+      Weight: 100
   CFDistribution:
     Type: "AWS::CloudFront::Distribution"
     DependsOn: "S3Bucket"
