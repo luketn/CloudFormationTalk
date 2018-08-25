@@ -15,3 +15,5 @@ aws cloudformation describe-stacks --stack-name $SUBDOMAIN --query 'Stacks[].Out
 echo "Finished CloudFormation deploy at "`date`
 
 aws s3 cp ./index.html s3://$SUBDOMAIN-site/index.html
+
+./test.sh "https://"$SUBDOMAIN".mycodefu.com"
