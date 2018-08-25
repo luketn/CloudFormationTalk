@@ -34,8 +34,8 @@ Resources:
         - Name: !Ref 'WebsiteAddress'
           ResourceRecords:
             - !Ref 'CDNDomain'
-          SetIdentifier: CDN
           TTL: 60
+          SetIdentifier: CDN
           Type: CNAME
           Weight: !Ref 'CDNDomainWeight'
         - Name: !Ref 'WebsiteAddress'
