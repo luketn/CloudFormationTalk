@@ -25,37 +25,46 @@ Parameters:
     Description: The DNS record weight value for the CDN
     Type: String
 
+Conditions:
+  CreateLegacyCDN: !Not [!Equals [!Ref LegacyCDNDomainWeight, 0]]
+  CreateCDN: !Not [!Equals [!Ref CDNDomainWeight, 0]]
+
 Resources:
-  CdnDnsRecords:
-    Type: AWS::Route53::RecordSetGroup
+  LegacyCDNR53Record:
+    Type: "AWS::Route53::RecordSet"
+    Condition: CreateLegacyCDN
     Properties:
+      Name: !Ref 'WebsiteAddress'
       HostedZoneName: !Ref 'HostedZoneName'
-      RecordSets:
-        - Name: !Ref 'WebsiteAddress'
-          ResourceRecords:
-            - !Ref 'CDNDomain'
-          TTL: 10
-          SetIdentifier: CDN
-          Type: CNAME
-          Weight: !Ref 'CDNDomainWeight'
-        - Name: !Ref 'WebsiteAddress'
-          ResourceRecords:
-            - !Ref 'LegacyCDNDomain'
-          SetIdentifier: LegacyCDN
-          TTL: 10
-          Type: CNAME
-          Weight: !Ref 'LegacyCDNDomainWeight'
+      ResourceRecords:
+        - !Ref 'LegacyCDNDomain'
+      SetIdentifier: LegacyCDN
+      TTL: 10
+      Type: CNAME
+      Weight: !Ref 'LegacyCDNDomainWeight'
+  CDNR53Record:
+    Type: "AWS::Route53::RecordSet"
+    Condition: CreateCDN
+    Properties:
+      Name: !Ref 'WebsiteAddress'
+      HostedZoneName: !Ref 'HostedZoneName'
+      ResourceRecords:
+      - !Ref 'CDNDomain'
+      TTL: 10
+      SetIdentifier: CDN
+      Type: CNAME
+      Weight: !Ref 'CDNDomainWeight'
 
 Outputs:
   WebsiteAddress:
-    Description: Published website address!
-    Value:
-      Fn::Join:
-        - ""
-        -
-          - "http://"
-          -
-            Ref: "WebsiteAddress"
+    Description: Website address
+    Value: !Ref "WebsiteAddress"
+  LegacyCDNDomain:
+    Value: !Ref LegacyCDNDomain
+    Description: Legacy CDN domain name
+  CloudFrontCDNDomain:
+    Value: !Ref CDNDomain
+    Description: CloudFront CDN domain name
   PercentTransitioned:
     Description: Percentage transitioned to CDN
     Value: !Ref "CDNDomainWeight"
