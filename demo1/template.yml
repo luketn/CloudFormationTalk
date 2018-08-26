@@ -5,6 +5,9 @@ Description: >
   Assumes you have the following available already:
   * An address for the website in mind (e.g. blog.example.com)
   * An existing Route53 Hosted Zone for the domain
+  * A HTTPS certificate registered in ACM in the us-east-1 region
+  * NOTE: Recommend running this template in the us-east-1 region, as S3 bucket backed CF distros work better with buckets in this region.
+  * Ref: https://gist.github.com/matalo33/fc2a9d8698c069e134b4b0b6640f0c84
 
 Parameters:
   HostedZoneName:
@@ -18,16 +21,23 @@ Parameters:
   S3BucketName:
     Description: Name of the s3 bucket to create for website source files. e.g. cfn-cf-site
     Type: "String"
+  TlsCertificateArn:
+    Description: >
+      ARN for the HTTPS certificate covering the domain in WebsiteAddress. This object must be
+      created in us-east-1, regardless of which region this CloudFormation template is launched.
+    Type: "String"
 
 Resources:
   S3Bucket:
     Type: "AWS::S3::Bucket"
+    DeletionPolicy: Retain
     Properties:
       BucketName: !Ref S3BucketName
-      AccessControl: PublicRead
-      WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: error.html
+  S3BucketCloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub 'CloudFront OAI for ${WebsiteAddress}'
   S3BucketPolicy:
     Type: "AWS::S3::BucketPolicy"
     Properties:
@@ -35,19 +45,12 @@ Resources:
       PolicyDocument:
         Statement:
           -
-            Sid: "AllowAll"
-            Effect: "Allow"
             Action:
-              - "s3:GetObject"
-            Resource:
-              Fn::Join:
-                - ""
-                -
-                  - "arn:aws:s3:::"
-                  -
-                    Ref: "S3Bucket"
-                  - "/*"
-            Principal: "*"
+              - s3:GetObject
+            Effect: Allow
+            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket, "/*" ] ]
+            Principal:
+              CanonicalUser: !GetAtt S3BucketCloudFrontOriginAccessIdentity.S3CanonicalUserId
   R53Record:
     Type: "AWS::Route53::RecordSet"
     Properties:
@@ -76,7 +79,8 @@ Resources:
             OriginPath: ""
             Id: S3BucketOrigin
             S3OriginConfig:
-              OriginAccessIdentity: ""
+              OriginAccessIdentity:
+                !Join [ "", [ "origin-access-identity/cloudfront/", !Ref S3BucketCloudFrontOriginAccessIdentity ] ]
         Comment:
           Fn::Join:
             - ""
@@ -94,10 +98,14 @@ Resources:
             QueryString: "false"
             Cookies:
               Forward: none
-          ViewerProtocolPolicy: allow-all
+          ViewerProtocolPolicy: redirect-to-https
         DefaultRootObject: index.html
         Enabled: "true"
+        HttpVersion: "http2"
         PriceClass: "PriceClass_All"
+        ViewerCertificate:
+          AcmCertificateArn: !Ref TlsCertificateArn
+          SslSupportMethod: sni-only
 
 Outputs:
   WebsiteAddress:
@@ -106,14 +114,9 @@ Outputs:
       Fn::Join:
         - ""
         -
-          - "http://"
+          - "https://"
           -
             Ref: "WebsiteAddress"
-  S3DirectURL:
-    Value: !GetAtt
-      - S3Bucket
-      - WebsiteURL
-    Description: URL for website hosted on S3
   CloudFrontDomain:
     Value: !GetAtt CFDistribution.DomainName
     Description: CDN domain name

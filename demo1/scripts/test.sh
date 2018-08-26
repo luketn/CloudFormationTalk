@@ -3,7 +3,7 @@
 SUBDOMAIN=$1
 
 echo "Testing that the site is running..."
-PAGE=$(curl "http://"$SUBDOMAIN".mycodefu.com")
+PAGE=$(curl "https://"$SUBDOMAIN".mycodefu.com")
 
 if [ "$PAGE" == "Welcome to CloudFront - This site was built and deployed with CloudFormation." ]
 then
