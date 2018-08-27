@@ -7,7 +7,7 @@ LEGACY_WEIGHT=$(expr 100 - $CLOUDFRONT_WEIGHT)
 
 SUBDOMAIN=${2:-cfn-cf-demo2}
 CLOUDFRONT_DOMAIN=${3:-awesome-and-thrifty.cloudfront.com}
-LEGACY_DOMAIN=${4:-awesome-but-pricey.akamai.com}
+LEGACY_DOMAIN=${4:-awesome-but-pricey.cdn.com}
 
 echo "Parameters passed:
 ./deploy.sh "$CLOUDFRONT_WEIGHT" "$SUBDOMAIN" "$CLOUDFRONT_DOMAIN" "$LEGACY_DOMAIN"
