@@ -48,25 +48,9 @@ Resources:
             Action:
               - s3:GetObject
             Effect: Allow
-            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket, "/*" ] ]
+            Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
             Principal:
               CanonicalUser: !GetAtt S3BucketCloudFrontOriginAccessIdentity.S3CanonicalUserId
-  R53Record:
-    Type: "AWS::Route53::RecordSet"
-    Properties:
-      Comment:
-        Fn::Join:
-          - ""
-          -
-            - "Alias CloudFront for "
-            -
-              Ref: "WebsiteAddress"
-      HostedZoneName: !Ref HostedZoneName
-      Type: A
-      Name: !Ref WebsiteAddress
-      AliasTarget:
-        DNSName: !GetAtt CFDistribution.DomainName
-        HostedZoneId: "Z2FDTNDATAQYW2"
   CFDistribution:
     Type: "AWS::CloudFront::Distribution"
     DependsOn: "S3Bucket"
@@ -79,20 +63,10 @@ Resources:
             OriginPath: ""
             Id: S3BucketOrigin
             S3OriginConfig:
-              OriginAccessIdentity:
-                !Join [ "", [ "origin-access-identity/cloudfront/", !Ref S3BucketCloudFrontOriginAccessIdentity ] ]
-        Comment:
-          Fn::Join:
-            - ""
-            -
-              - "CloudFront origin for "
-              -
-                Ref: "WebsiteAddress"
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${S3BucketCloudFrontOriginAccessIdentity}"
+        Comment: !Sub "CloudFront origin for  ${WebsiteAddress}"
         DefaultCacheBehavior:
-          AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
+          AllowedMethods: ["GET", "HEAD", "OPTIONS"]
           TargetOriginId: S3BucketOrigin
           ForwardedValues:
             QueryString: "false"
@@ -106,17 +80,21 @@ Resources:
         ViewerCertificate:
           AcmCertificateArn: !Ref TlsCertificateArn
           SslSupportMethod: sni-only
+  R53Record:
+    Type: "AWS::Route53::RecordSet"
+    Properties:
+      Comment: !Sub "Alias CloudFront for ${WebsiteAddress}"
+      HostedZoneName: !Ref HostedZoneName
+      Type: A
+      Name: !Ref WebsiteAddress
+      AliasTarget:
+        DNSName: !GetAtt CFDistribution.DomainName
+        HostedZoneId: "Z2FDTNDATAQYW2"
 
 Outputs:
   WebsiteAddress:
     Description: Published website address!
-    Value:
-      Fn::Join:
-        - ""
-        -
-          - "https://"
-          -
-            Ref: "WebsiteAddress"
+    Value: !Sub "https://${WebsiteAddress}"
   CloudFrontDomain:
     Value: !GetAtt CFDistribution.DomainName
     Description: CDN domain name
